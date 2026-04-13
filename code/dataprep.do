@@ -40,7 +40,7 @@ replace count_match=. if degree_match==.
 sum match_n
 gen freq=count_match/r(max)
 bysort usuario_id: egen wdegree_match=sum(freq^2)
-replace wdegree_match=1/wdegree_match
+replace wdegree_match=100*(1/wdegree_match)
 drop freq
 
 * Reshape back to wide format:

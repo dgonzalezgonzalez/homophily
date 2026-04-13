@@ -33,11 +33,11 @@ foreach var in indegreef indegreebf indegreee indegreewe degreef degreebf degree
 	local min_`var'=r(min)
 	reg `var' degree_match
 	local beta : display %4.2f _b[degree_match]
-	twoway (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree") ytitle("``var'' degree") text(`min_`var'' `max_match' "β = `beta'")
+	twoway (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree") ytitle("``var'' degree") xscale(range(0 1)) yscale(range(0 1)) xlabel(0(.2)1) ylabel(0(.2)1) text(`min_`var'' `max_match' "β = `beta'")
 	graph save g1, replace
 	reg `var' wdegree_match
 	local beta : display %4.2f _b[wdegree_match]
-	twoway (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") text(`min_`var'' `max_wmatch' "β = `beta'")
+	twoway (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 1)) yscale(range(0 1)) xlabel(0(.2)1) ylabel(0(.2)1) text(`min_`var'' `max_wmatch' "β = `beta'")
 	graph save g2, replace
 	graph combine g1.gph g2.gph
 	graph export "$cd/output/scatter_`var'.png", replace
