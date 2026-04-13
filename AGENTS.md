@@ -8,6 +8,13 @@
 Put analysis logic in `code/`. Treat `temp/` and `output/` as reproducible artifacts.
 
 ## Build, Test, and Development Commands
+- Run full cached pipeline (default):
+  - `.venv/bin/python -m pipeline.main full`
+- Run individual cached stages:
+  - `.venv/bin/python -m pipeline.main match`
+  - `.venv/bin/python -m pipeline.main prep`
+  - `.venv/bin/python -m pipeline.main analysis`
+  - `.venv/bin/python -m pipeline.main validate`
 - Run full pipeline (Stata batch):
   - `stata-mp -b do code/main.do`
   - Runs data preparation and descriptive outputs.
