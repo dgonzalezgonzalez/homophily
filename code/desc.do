@@ -2,8 +2,15 @@
 /////////////////////////// Descriptive results //////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-// Class-level degree correlations:
+capture confirm file "$cd/temp/analysis_base.dta"
+if _rc {
+	di as error "Required file not found: $cd/temp/analysis_base.dta"
+	exit 601
+}
 
+use "$cd/temp/analysis_base.dta", clear
+
+// Class-level degree correlations:
 preserve
 collapse (sum) degree_match wdegree_match indegreef indegreebf indegreee indegreewe degreef degreebf degreee degreewe outdegreef outdegreebf outdegreee outdegreewe (mean) class_size, by(class_id)
 drop if degree_match==0 // these are classes with missing values
@@ -24,20 +31,32 @@ local degreef "Friend"
 local degreebf "Best friend"
 local degreee "Enemy"
 local degreewe "Worst enemy"
-sum degree_match
-local max_match=r(max)
-sum wdegree_match
-local max_wmatch=r(max)
+foreach xvar in degree_match wdegree_match {
+	quietly sum `xvar', meanonly
+	local max_`xvar'=r(max)
+}
 foreach var in indegreef indegreebf indegreee indegreewe degreef degreebf degreee degreewe outdegreef outdegreebf outdegreee outdegreewe {
-	sum `var'
-	local min_`var'=r(min)
+	quietly sum `var', meanonly
+	local max_`var'=r(max)
 	reg `var' degree_match
 	local beta : display %4.2f _b[degree_match]
-	twoway (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree") ytitle("``var'' degree") xscale(range(0 1)) yscale(range(0 1)) xlabel(0(.2)1) ylabel(0(.2)1) text(`min_`var'' `max_match' "β = `beta'")
+	local axis_max = max(`max_degree_match', `max_`var'')
+	if `axis_max'<=0 local axis_max = 0.2
+	local axis_step = cond(`axis_max'<=0.1, 0.02, cond(`axis_max'<=0.25, 0.05, cond(`axis_max'<=0.5, 0.1, cond(`axis_max'<=1, 0.2, 0.5))))
+	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
+	local text_x = `axis_max'*0.78
+	local text_y = `axis_max'*0.12
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g1, replace
 	reg `var' wdegree_match
 	local beta : display %4.2f _b[wdegree_match]
-	twoway (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 1)) yscale(range(0 1)) xlabel(0(.2)1) ylabel(0(.2)1) text(`min_`var'' `max_wmatch' "β = `beta'")
+	local axis_max = max(`max_wdegree_match', `max_`var'')
+	if `axis_max'<=0 local axis_max = 0.2
+	local axis_step = cond(`axis_max'<=0.1, 0.02, cond(`axis_max'<=0.25, 0.05, cond(`axis_max'<=0.5, 0.1, cond(`axis_max'<=1, 0.2, 0.5))))
+	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
+	local text_x = `axis_max'*0.78
+	local text_y = `axis_max'*0.12
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g2, replace
 	graph combine g1.gph g2.gph
 	graph export "$cd/output/scatter_`var'.png", replace
@@ -47,7 +66,6 @@ erase g2.gph
 restore
 
 // Individual-level degree correlations:
-
 preserve
 * Normalize by (n-1)n term:
 foreach var in degree_match wdegree_match indegreef indegreebf indegreee indegreewe {
@@ -59,12 +77,11 @@ reg indegreef degree_match i.school i.grade i.group2, vce(cluster class_id)
 restore
 
 // Assortativity at the micro-level:
-
 reshape long match_id count_match, i(usuario_id) j(n)
 drop n
 foreach nwk in friend friend2 enemy enemy2 {
-	merge m:1 usuario_id match_id using assort_`nwk'.dta, nogen
-	}
+	merge m:1 usuario_id match_id using "$cd/temp/assort_`nwk'.dta", nogen
+}
 foreach nwk in friend friend2 enemy enemy2 {
 	foreach var in dir1 dir2 union inter {
 		bysort usuario_id: egen assort_`nwk'_`var'_avg=mean(assort_`nwk'_`var')
