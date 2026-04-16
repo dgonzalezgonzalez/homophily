@@ -74,28 +74,35 @@ erase g2.gph
 foreach var in degree_match wdegree_match indegreef indegreebf indegreee indegreewe degreef degreebf degreee degreewe outdegreef outdegreebf outdegreee outdegreewe {
 	replace `var'=`var'_raw
 }
-gen denom_fe = outdegreef_raw + outdegreee_raw
-gen denom_bw = outdegreebf_raw + outdegreewe_raw
+gen denom_in_fe = indegreef_raw + indegreee_raw
+gen denom_out_fe = outdegreef_raw + outdegreee_raw
+gen denom_deg_fe = degreef_raw + degreee_raw
+gen denom_in_bw = indegreebf_raw + indegreewe_raw
+gen denom_out_bw = outdegreebf_raw + outdegreewe_raw
+gen denom_deg_bw = degreebf_raw + degreewe_raw
 
-local fe_vars "indegreef indegreee outdegreef outdegreee"
-local bw_vars "indegreebf indegreewe outdegreebf outdegreewe"
-
-foreach var in `fe_vars' {
-	replace `var'=`var'/denom_fe
+foreach var in indegreef indegreee {
+	replace `var'=`var'/denom_in_fe
+}
+foreach var in outdegreef outdegreee {
+	replace `var'=`var'/denom_out_fe
 }
 foreach var in degreef degreee {
-	replace `var'=`var'/(2*denom_fe)
+	replace `var'=`var'/(2*denom_deg_fe)
 }
-foreach var in `bw_vars' {
-	replace `var'=`var'/denom_bw
+foreach var in indegreebf indegreewe {
+	replace `var'=`var'/denom_in_bw
+}
+foreach var in outdegreebf outdegreewe {
+	replace `var'=`var'/denom_out_bw
 }
 foreach var in degreebf degreewe {
-	replace `var'=`var'/(2*denom_bw)
+	replace `var'=`var'/(2*denom_deg_bw)
 }
 
-foreach var in indegreef indegreee outdegreef outdegreee {
-	replace degree_match=degree_match_raw/denom_fe
-	replace wdegree_match=wdegree_match_raw/denom_fe
+foreach var in indegreef indegreee {
+	replace degree_match=degree_match_raw/denom_in_fe
+	replace wdegree_match=wdegree_match_raw/denom_in_fe
 	quietly sum degree_match, meanonly
 	local max_degree_match=r(max)
 	quietly sum wdegree_match, meanonly
@@ -126,9 +133,75 @@ foreach var in indegreef indegreee outdegreef outdegreee {
 	graph export "$cd/output/scatter/scatter_altnorm_`var'.png", width(3600) replace
 }
 
-foreach var in indegreebf indegreewe outdegreebf outdegreewe {
-	replace degree_match=degree_match_raw/denom_bw
-	replace wdegree_match=wdegree_match_raw/denom_bw
+foreach var in outdegreef outdegreee {
+	replace degree_match=degree_match_raw/denom_out_fe
+	replace wdegree_match=wdegree_match_raw/denom_out_fe
+	quietly sum degree_match, meanonly
+	local max_degree_match=r(max)
+	quietly sum wdegree_match, meanonly
+	local max_wdegree_match=r(max)
+	quietly sum `var', meanonly
+	local max_`var'=r(max)
+	reg `var' degree_match
+	local beta : display %4.2f _b[degree_match]
+	local axis_max = max(`max_degree_match', `max_`var'')
+	if `axis_max'<=0 local axis_max = 0.2
+	local axis_step = cond(`axis_max'<=0.1, 0.02, cond(`axis_max'<=0.25, 0.05, cond(`axis_max'<=0.5, 0.1, cond(`axis_max'<=1, 0.2, 0.5))))
+	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
+	local text_x = `axis_max'*0.78
+	local text_y = `axis_max'*0.12
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	graph save g1, replace
+	reg `var' wdegree_match
+	local beta : display %4.2f _b[wdegree_match]
+	local axis_max = max(`max_wdegree_match', `max_`var'')
+	if `axis_max'<=0 local axis_max = 0.2
+	local axis_step = cond(`axis_max'<=0.1, 0.02, cond(`axis_max'<=0.25, 0.05, cond(`axis_max'<=0.5, 0.1, cond(`axis_max'<=1, 0.2, 0.5))))
+	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
+	local text_x = `axis_max'*0.78
+	local text_y = `axis_max'*0.12
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	graph save g2, replace
+	graph combine g1.gph g2.gph
+	graph export "$cd/output/scatter/scatter_altnorm_`var'.png", width(3600) replace
+}
+
+foreach var in indegreebf indegreewe {
+	replace degree_match=degree_match_raw/denom_in_bw
+	replace wdegree_match=wdegree_match_raw/denom_in_bw
+	quietly sum degree_match, meanonly
+	local max_degree_match=r(max)
+	quietly sum wdegree_match, meanonly
+	local max_wdegree_match=r(max)
+	quietly sum `var', meanonly
+	local max_`var'=r(max)
+	reg `var' degree_match
+	local beta : display %4.2f _b[degree_match]
+	local axis_max = max(`max_degree_match', `max_`var'')
+	if `axis_max'<=0 local axis_max = 0.2
+	local axis_step = cond(`axis_max'<=0.1, 0.02, cond(`axis_max'<=0.25, 0.05, cond(`axis_max'<=0.5, 0.1, cond(`axis_max'<=1, 0.2, 0.5))))
+	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
+	local text_x = `axis_max'*0.78
+	local text_y = `axis_max'*0.12
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	graph save g1, replace
+	reg `var' wdegree_match
+	local beta : display %4.2f _b[wdegree_match]
+	local axis_max = max(`max_wdegree_match', `max_`var'')
+	if `axis_max'<=0 local axis_max = 0.2
+	local axis_step = cond(`axis_max'<=0.1, 0.02, cond(`axis_max'<=0.25, 0.05, cond(`axis_max'<=0.5, 0.1, cond(`axis_max'<=1, 0.2, 0.5))))
+	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
+	local text_x = `axis_max'*0.78
+	local text_y = `axis_max'*0.12
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	graph save g2, replace
+	graph combine g1.gph g2.gph
+	graph export "$cd/output/scatter/scatter_altnorm_`var'.png", width(3600) replace
+}
+
+foreach var in outdegreebf outdegreewe {
+	replace degree_match=degree_match_raw/denom_out_bw
+	replace wdegree_match=wdegree_match_raw/denom_out_bw
 	quietly sum degree_match, meanonly
 	local max_degree_match=r(max)
 	quietly sum wdegree_match, meanonly
@@ -160,8 +233,8 @@ foreach var in indegreebf indegreewe outdegreebf outdegreewe {
 }
 
 foreach var in degreef degreee {
-	replace degree_match=degree_match_raw/(2*denom_fe)
-	replace wdegree_match=wdegree_match_raw/(2*denom_fe)
+	replace degree_match=degree_match_raw/(2*denom_deg_fe)
+	replace wdegree_match=wdegree_match_raw/(2*denom_deg_fe)
 	quietly sum degree_match, meanonly
 	local max_degree_match=r(max)
 	quietly sum wdegree_match, meanonly
@@ -193,8 +266,8 @@ foreach var in degreef degreee {
 }
 
 foreach var in degreebf degreewe {
-	replace degree_match=degree_match_raw/(2*denom_bw)
-	replace wdegree_match=wdegree_match_raw/(2*denom_bw)
+	replace degree_match=degree_match_raw/(2*denom_deg_bw)
+	replace wdegree_match=wdegree_match_raw/(2*denom_deg_bw)
 	quietly sum degree_match, meanonly
 	local max_degree_match=r(max)
 	quietly sum wdegree_match, meanonly
@@ -225,7 +298,7 @@ foreach var in degreebf degreewe {
 	graph export "$cd/output/scatter/scatter_altnorm_`var'.png", width(3600) replace
 }
 
-drop *_raw denom_fe denom_bw
+drop *_raw denom_in_fe denom_out_fe denom_deg_fe denom_in_bw denom_out_bw denom_deg_bw
 erase g1.gph
 erase g2.gph
 restore
