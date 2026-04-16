@@ -110,7 +110,7 @@ foreach var in indegreef indegreee outdegreef outdegreee {
 	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
 	local text_x = `axis_max'*0.78
 	local text_y = `axis_max'*0.12
-	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree (friends+enemies)") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g1, replace
 	reg `var' wdegree_match
 	local beta : display %4.2f _b[wdegree_match]
@@ -120,7 +120,7 @@ foreach var in indegreef indegreee outdegreef outdegreee {
 	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
 	local text_x = `axis_max'*0.78
 	local text_y = `axis_max'*0.12
-	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree (friends+enemies)") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g2, replace
 	graph combine g1.gph g2.gph
 	graph export "$cd/output/scatter/scatter_altnorm_`var'.png", width(3600) replace
@@ -143,7 +143,7 @@ foreach var in indegreebf indegreewe outdegreebf outdegreewe {
 	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
 	local text_x = `axis_max'*0.78
 	local text_y = `axis_max'*0.12
-	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree (best+worst ties)") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g1, replace
 	reg `var' wdegree_match
 	local beta : display %4.2f _b[wdegree_match]
@@ -153,7 +153,7 @@ foreach var in indegreebf indegreewe outdegreebf outdegreewe {
 	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
 	local text_x = `axis_max'*0.78
 	local text_y = `axis_max'*0.12
-	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree (best+worst ties)") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g2, replace
 	graph combine g1.gph g2.gph
 	graph export "$cd/output/scatter/scatter_altnorm_`var'.png", width(3600) replace
@@ -176,7 +176,7 @@ foreach var in degreef degreee {
 	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
 	local text_x = `axis_max'*0.78
 	local text_y = `axis_max'*0.12
-	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree (2*[friends+enemies])") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g1, replace
 	reg `var' wdegree_match
 	local beta : display %4.2f _b[wdegree_match]
@@ -186,7 +186,7 @@ foreach var in degreef degreee {
 	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
 	local text_x = `axis_max'*0.78
 	local text_y = `axis_max'*0.12
-	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree (2*[friends+enemies])") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g2, replace
 	graph combine g1.gph g2.gph
 	graph export "$cd/output/scatter/scatter_altnorm_`var'.png", width(3600) replace
@@ -209,7 +209,7 @@ foreach var in degreebf degreewe {
 	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
 	local text_x = `axis_max'*0.78
 	local text_y = `axis_max'*0.12
-	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree (2*[best+worst ties])") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g1, replace
 	reg `var' wdegree_match
 	local beta : display %4.2f _b[wdegree_match]
@@ -219,7 +219,7 @@ foreach var in degreebf degreewe {
 	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
 	local text_x = `axis_max'*0.78
 	local text_y = `axis_max'*0.12
-	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree (2*[best+worst ties])") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g2, replace
 	graph combine g1.gph g2.gph
 	graph export "$cd/output/scatter/scatter_altnorm_`var'.png", width(3600) replace
