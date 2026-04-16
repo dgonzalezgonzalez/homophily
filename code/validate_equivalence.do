@@ -25,10 +25,18 @@ foreach stub in `baseline_files' {
 	}
 }
 
-foreach fig in scatter_degreebf scatter_degreee scatter_degreef scatter_degreewe scatter_indegreebf scatter_indegreee scatter_indegreef scatter_indegreewe scatter_outdegreebf scatter_outdegreee scatter_outdegreef scatter_outdegreewe dens_assort dens_assort_enemy dens_assort_enemy2 dens_assort_friend dens_assort_friend2 dens_wassort dens_wassort_enemy dens_wassort_enemy2 dens_wassort_friend dens_wassort_friend2 {
-	capture confirm file "$cd/output/`fig'.png"
+foreach fig in scatter_degreebf scatter_degreee scatter_degreef scatter_degreewe scatter_indegreebf scatter_indegreee scatter_indegreef scatter_indegreewe scatter_outdegreebf scatter_outdegreee scatter_outdegreef scatter_outdegreewe {
+	capture confirm file "$cd/output/scatter/`fig'.png"
 	if _rc {
-		di as error "Expected output missing: $cd/output/`fig'.png"
+		di as error "Expected output missing: $cd/output/scatter/`fig'.png"
+		exit 601
+	}
+}
+
+foreach fig in dens_assort dens_assort_enemy dens_assort_enemy2 dens_assort_friend dens_assort_friend2 dens_wassort dens_wassort_enemy dens_wassort_enemy2 dens_wassort_friend dens_wassort_friend2 {
+	capture confirm file "$cd/output/distribution/`fig'.png"
+	if _rc {
+		di as error "Expected output missing: $cd/output/distribution/`fig'.png"
 		exit 601
 	}
 }

@@ -33,8 +33,9 @@ Matching notes:
 - Use `.venv/bin/python -m pipeline.main match --rebuild-matches` to force Stata to regenerate matching.
 
 ## Main Outputs
-- Scatter plots: `output/scatter_*.png`
-- Assortativity densities: `output/dens_assort*.png`, `output/dens_wassort*.png`
+- Scatter plots: `output/scatter/scatter_*.png`
+- Alternative classroom-tie normalization scatters: `output/scatter/scatter_altnorm_*.png`
+- Assortativity densities: `output/distribution/dens_assort*.png`, `output/distribution/dens_wassort*.png`
 
 ## Notes
 - `temp/` and `output/` are reproducible artifacts and can be regenerated from source code.

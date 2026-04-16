@@ -10,10 +10,16 @@ if _rc {
 
 use "$cd/temp/analysis_base.dta", clear
 
+capture mkdir "$cd/output/scatter"
+capture mkdir "$cd/output/distribution"
+
 // Class-level degree correlations:
 preserve
 collapse (sum) degree_match wdegree_match indegreef indegreebf indegreee indegreewe degreef degreebf degreee degreewe outdegreef outdegreebf outdegreee outdegreewe (mean) class_size, by(class_id)
 drop if degree_match==0 // these are classes with missing values
+foreach var in degree_match wdegree_match indegreef indegreebf indegreee indegreewe degreef degreebf degreee degreewe outdegreef outdegreebf outdegreee outdegreewe {
+	gen `var'_raw = `var'
+}
 * Normalize by (n-1)n term:
 foreach var in degree_match wdegree_match indegreef indegreebf indegreee indegreewe outdegreef outdegreebf outdegreee outdegreewe {
 	replace `var'=`var'/((class_size-1)*class_size)
@@ -59,8 +65,167 @@ foreach var in indegreef indegreebf indegreee indegreewe degreef degreebf degree
 	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g2, replace
 	graph combine g1.gph g2.gph
-	graph export "$cd/output/scatter_`var'.png", replace
+	graph export "$cd/output/scatter/scatter_`var'.png", width(3600) replace
 }
+erase g1.gph
+erase g2.gph
+
+* Alternative normalization: denominator is classroom ties by network family.
+foreach var in degree_match wdegree_match indegreef indegreebf indegreee indegreewe degreef degreebf degreee degreewe outdegreef outdegreebf outdegreee outdegreewe {
+	replace `var'=`var'_raw
+}
+gen denom_fe = outdegreef_raw + outdegreee_raw
+gen denom_bw = outdegreebf_raw + outdegreewe_raw
+
+local fe_vars "indegreef indegreee outdegreef outdegreee"
+local bw_vars "indegreebf indegreewe outdegreebf outdegreewe"
+
+foreach var in `fe_vars' {
+	replace `var'=`var'/denom_fe
+}
+foreach var in degreef degreee {
+	replace `var'=`var'/(2*denom_fe)
+}
+foreach var in `bw_vars' {
+	replace `var'=`var'/denom_bw
+}
+foreach var in degreebf degreewe {
+	replace `var'=`var'/(2*denom_bw)
+}
+
+foreach var in indegreef indegreee outdegreef outdegreee {
+	replace degree_match=degree_match_raw/denom_fe
+	replace wdegree_match=wdegree_match_raw/denom_fe
+	quietly sum degree_match, meanonly
+	local max_degree_match=r(max)
+	quietly sum wdegree_match, meanonly
+	local max_wdegree_match=r(max)
+	quietly sum `var', meanonly
+	local max_`var'=r(max)
+	reg `var' degree_match
+	local beta : display %4.2f _b[degree_match]
+	local axis_max = max(`max_degree_match', `max_`var'')
+	if `axis_max'<=0 local axis_max = 0.2
+	local axis_step = cond(`axis_max'<=0.1, 0.02, cond(`axis_max'<=0.25, 0.05, cond(`axis_max'<=0.5, 0.1, cond(`axis_max'<=1, 0.2, 0.5))))
+	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
+	local text_x = `axis_max'*0.78
+	local text_y = `axis_max'*0.12
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree (friends+enemies)") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	graph save g1, replace
+	reg `var' wdegree_match
+	local beta : display %4.2f _b[wdegree_match]
+	local axis_max = max(`max_wdegree_match', `max_`var'')
+	if `axis_max'<=0 local axis_max = 0.2
+	local axis_step = cond(`axis_max'<=0.1, 0.02, cond(`axis_max'<=0.25, 0.05, cond(`axis_max'<=0.5, 0.1, cond(`axis_max'<=1, 0.2, 0.5))))
+	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
+	local text_x = `axis_max'*0.78
+	local text_y = `axis_max'*0.12
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree (friends+enemies)") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	graph save g2, replace
+	graph combine g1.gph g2.gph
+	graph export "$cd/output/scatter/scatter_altnorm_`var'.png", width(3600) replace
+}
+
+foreach var in indegreebf indegreewe outdegreebf outdegreewe {
+	replace degree_match=degree_match_raw/denom_bw
+	replace wdegree_match=wdegree_match_raw/denom_bw
+	quietly sum degree_match, meanonly
+	local max_degree_match=r(max)
+	quietly sum wdegree_match, meanonly
+	local max_wdegree_match=r(max)
+	quietly sum `var', meanonly
+	local max_`var'=r(max)
+	reg `var' degree_match
+	local beta : display %4.2f _b[degree_match]
+	local axis_max = max(`max_degree_match', `max_`var'')
+	if `axis_max'<=0 local axis_max = 0.2
+	local axis_step = cond(`axis_max'<=0.1, 0.02, cond(`axis_max'<=0.25, 0.05, cond(`axis_max'<=0.5, 0.1, cond(`axis_max'<=1, 0.2, 0.5))))
+	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
+	local text_x = `axis_max'*0.78
+	local text_y = `axis_max'*0.12
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree (best+worst ties)") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	graph save g1, replace
+	reg `var' wdegree_match
+	local beta : display %4.2f _b[wdegree_match]
+	local axis_max = max(`max_wdegree_match', `max_`var'')
+	if `axis_max'<=0 local axis_max = 0.2
+	local axis_step = cond(`axis_max'<=0.1, 0.02, cond(`axis_max'<=0.25, 0.05, cond(`axis_max'<=0.5, 0.1, cond(`axis_max'<=1, 0.2, 0.5))))
+	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
+	local text_x = `axis_max'*0.78
+	local text_y = `axis_max'*0.12
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree (best+worst ties)") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	graph save g2, replace
+	graph combine g1.gph g2.gph
+	graph export "$cd/output/scatter/scatter_altnorm_`var'.png", width(3600) replace
+}
+
+foreach var in degreef degreee {
+	replace degree_match=degree_match_raw/(2*denom_fe)
+	replace wdegree_match=wdegree_match_raw/(2*denom_fe)
+	quietly sum degree_match, meanonly
+	local max_degree_match=r(max)
+	quietly sum wdegree_match, meanonly
+	local max_wdegree_match=r(max)
+	quietly sum `var', meanonly
+	local max_`var'=r(max)
+	reg `var' degree_match
+	local beta : display %4.2f _b[degree_match]
+	local axis_max = max(`max_degree_match', `max_`var'')
+	if `axis_max'<=0 local axis_max = 0.2
+	local axis_step = cond(`axis_max'<=0.1, 0.02, cond(`axis_max'<=0.25, 0.05, cond(`axis_max'<=0.5, 0.1, cond(`axis_max'<=1, 0.2, 0.5))))
+	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
+	local text_x = `axis_max'*0.78
+	local text_y = `axis_max'*0.12
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree (2*[friends+enemies])") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	graph save g1, replace
+	reg `var' wdegree_match
+	local beta : display %4.2f _b[wdegree_match]
+	local axis_max = max(`max_wdegree_match', `max_`var'')
+	if `axis_max'<=0 local axis_max = 0.2
+	local axis_step = cond(`axis_max'<=0.1, 0.02, cond(`axis_max'<=0.25, 0.05, cond(`axis_max'<=0.5, 0.1, cond(`axis_max'<=1, 0.2, 0.5))))
+	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
+	local text_x = `axis_max'*0.78
+	local text_y = `axis_max'*0.12
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree (2*[friends+enemies])") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	graph save g2, replace
+	graph combine g1.gph g2.gph
+	graph export "$cd/output/scatter/scatter_altnorm_`var'.png", width(3600) replace
+}
+
+foreach var in degreebf degreewe {
+	replace degree_match=degree_match_raw/(2*denom_bw)
+	replace wdegree_match=wdegree_match_raw/(2*denom_bw)
+	quietly sum degree_match, meanonly
+	local max_degree_match=r(max)
+	quietly sum wdegree_match, meanonly
+	local max_wdegree_match=r(max)
+	quietly sum `var', meanonly
+	local max_`var'=r(max)
+	reg `var' degree_match
+	local beta : display %4.2f _b[degree_match]
+	local axis_max = max(`max_degree_match', `max_`var'')
+	if `axis_max'<=0 local axis_max = 0.2
+	local axis_step = cond(`axis_max'<=0.1, 0.02, cond(`axis_max'<=0.25, 0.05, cond(`axis_max'<=0.5, 0.1, cond(`axis_max'<=1, 0.2, 0.5))))
+	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
+	local text_x = `axis_max'*0.78
+	local text_y = `axis_max'*0.12
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' degree_match, mcolor(black%40)) (lfitci `var' degree_match, color(gs10%20)) (lfit `var' degree_match, color(black)), legend(off) xtitle("Matching degree (2*[best+worst ties])") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	graph save g1, replace
+	reg `var' wdegree_match
+	local beta : display %4.2f _b[wdegree_match]
+	local axis_max = max(`max_wdegree_match', `max_`var'')
+	if `axis_max'<=0 local axis_max = 0.2
+	local axis_step = cond(`axis_max'<=0.1, 0.02, cond(`axis_max'<=0.25, 0.05, cond(`axis_max'<=0.5, 0.1, cond(`axis_max'<=1, 0.2, 0.5))))
+	local axis_max = ceil(`axis_max'/`axis_step')*`axis_step'
+	local text_x = `axis_max'*0.78
+	local text_y = `axis_max'*0.12
+	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree (2*[best+worst ties])") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
+	graph save g2, replace
+	graph combine g1.gph g2.gph
+	graph export "$cd/output/scatter/scatter_altnorm_`var'.png", width(3600) replace
+}
+
+drop *_raw denom_fe denom_bw
 erase g1.gph
 erase g2.gph
 restore
@@ -105,16 +270,16 @@ foreach nwk in friend friend2 enemy enemy2 {
 	else keep if assort_`nwk'_dir1<r(p76)
 	twoway (kdensity assort_`nwk'_dir1, lcolor(navy) lwidth(medthick) lpattern(solid)) (kdensity assort_`nwk'_dir2, lcolor(cranberry) lwidth(medthick) lpattern(dash)) (kdensity assort_`nwk'_union, lcolor(forest_green) lwidth(medthick) lpattern(dot)) (kdensity assort_`nwk'_inter, lcolor(dkorange) lwidth(medthick) lpattern(longdash)), legend(order(1 "Out-``nwk''" 2 "In-``nwk''" 3 "Union" 4 "Intersection") pos(1) ring(0) cols(1) size(small)) xtitle("Assortativity") ytitle("Density")
 	graph save g`nwk', replace
-	graph export "$cd/output/dens_assort_`nwk'.png", replace
+	graph export "$cd/output/distribution/dens_assort_`nwk'.png", width(3200) replace
 	twoway (kdensity wassort_`nwk'_dir1, lcolor(navy) lwidth(medthick) lpattern(solid)) (kdensity wassort_`nwk'_dir2, lcolor(cranberry) lwidth(medthick) lpattern(dash)) (kdensity wassort_`nwk'_union, lcolor(forest_green) lwidth(medthick) lpattern(dot)) (kdensity wassort_`nwk'_inter, lcolor(dkorange) lwidth(medthick) lpattern(longdash)), legend(order(1 "Out-``nwk''" 2 "In-``nwk''" 3 "Union" 4 "Intersection") pos(1) ring(0) cols(1) size(small)) xtitle("Weighted assortativity") ytitle("Density")
 	graph save wg`nwk', replace
-	graph export "$cd/output/dens_wassort_`nwk'.png", replace
+	graph export "$cd/output/distribution/dens_wassort_`nwk'.png", width(3200) replace
 	restore
 }
 graph combine gfriend.gph gfriend2.gph genemy.gph genemy2.gph
-graph export "$cd/output/dens_assort.png", replace
+graph export "$cd/output/distribution/dens_assort.png", width(3400) replace
 graph combine wgfriend.gph wgfriend2.gph wgenemy.gph wgenemy2.gph
-graph export "$cd/output/dens_wassort.png", replace
+graph export "$cd/output/distribution/dens_wassort.png", width(3400) replace
 foreach g in gfriend gfriend2 genemy genemy2 {
 	erase `g'.gph
 	erase w`g'.gph
