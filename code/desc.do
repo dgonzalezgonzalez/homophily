@@ -2,10 +2,33 @@
 /////////////////////////// Descriptive results //////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
+if "$cd"=="" {
+	di as error "Global cd is not set. Define global cd before running desc.do."
+	exit 198
+}
+if "$raw_dta"=="" {
+	di as error "Global raw_dta is not set. Define global raw_dta before running desc.do."
+	exit 198
+}
+
+capture mkdir "$cd/temp"
+capture mkdir "$cd/output"
+
+local need_prep = 0
 capture confirm file "$cd/temp/analysis_base.dta"
-if _rc {
-	di as error "Required file not found: $cd/temp/analysis_base.dta"
-	exit 601
+if _rc local need_prep = 1
+foreach nwk in friend friend2 enemy enemy2 {
+	capture confirm file "$cd/temp/assort_`nwk'.dta"
+	if _rc local need_prep = 1
+}
+if `need_prep' {
+	capture confirm file "$cd/temp/matches.dta"
+	if _rc {
+		di as txt "Missing temp/matches.dta; running matches.do..."
+		do "$cd/code/matches.do"
+	}
+	di as txt "Building prep artifacts for desc.do standalone..."
+	do "$cd/code/dataprep.do"
 }
 
 use "$cd/temp/analysis_base.dta", clear
