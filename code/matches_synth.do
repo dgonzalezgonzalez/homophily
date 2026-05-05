@@ -26,58 +26,64 @@ append using `copy2'
 save "$cd/temp/synth_panel_base.dta", replace
 restore
 
-tempfile base class_raw class_t class_d class_edges all_edges
+tempfile base keep_w
 save `base', replace
-quietly levelsof class_id, local(class_list)
-clear
-save `all_edges', emptyok replace
+levelsof class_id, local(class_list)
+
+tempname donorh vh
+postfile `donorh' double usuario_id double match_id double count_match using "$cd/temp/matches_synth_long.dta", replace
+postfile `vh' double usuario_id str32 covariate double v_weight using "$cd/temp/matches_synth_vweights.dta", replace
 
 foreach c in `class_list' {
 	use `base', clear
 	keep if class_id=="`c'"
 	quietly count
 	if r(N)<2 continue
-	save `class_raw', replace
 
-	use `class_raw', clear
-	keep usuario_id class_id $xlist
-	foreach x of global xlist {
-		rename `x' t_`x'
+	levelsof usuario_id, local(treated_ids)
+
+	foreach tu of local treated_ids {
+		use `base', clear
+		keep if class_id=="`c'"
+		expand 2
+		bys usuario_id: gen te = _n
+		xtset usuario_id te
+
+		capture erase `keep_w'
+		capture quietly synth scoreN gender scoreN migrant bullying_union moodgeneral patienceN crtN finN riskyN inequalityN honest, ///
+			trunit(`tu') trperiod(2) keep(`keep_w') replace
+		if _rc!=0 continue
+
+		* Store donor weights for treated unit.
+		use `keep_w', clear
+		keep _Co_Number _W_Weight
+		rename _Co_Number match_id
+		rename _W_Weight count_match
+		drop if missing(count_match)
+		quietly count
+		if r(N)>0 {
+			forvalues i = 1/`=_N' {
+				post `donorh' (`tu') (match_id[`i']) (count_match[`i'])
+			}
+		}
+
+		* Store covariate weights (diagonal of V matrix).
+		matrix V = e(V_matrix)
+		local p = rowsof(V)
+		local j = 0
+		foreach vname of global xlist {
+			local ++j
+			if `j'>`p' continue, break
+			scalar wj = V[`j',`j']
+			post `vh' (`tu') ("`vname'") (wj)
+		}
 	}
-	save `class_t', replace
-
-	use `class_raw', clear
-	keep usuario_id class_id $xlist
-	rename usuario_id match_id
-	foreach x of global xlist {
-		rename `x' d_`x'
-	}
-	save `class_d', replace
-
-	use `class_t', clear
-	joinby class_id using `class_d'
-	drop if usuario_id==match_id
-
-	gen dist_sq = 0
-	foreach x of global xlist {
-		replace dist_sq = dist_sq + (t_`x' - d_`x')^2
-	}
-
-	gsort usuario_id dist_sq
-	by usuario_id: gen donor_rank = _n
-	keep if donor_rank<=10
-	drop donor_rank
-
-	gen inv_dist = 1/(dist_sq + 1e-8)
-	by usuario_id: egen inv_sum = total(inv_dist)
-	gen count_match = inv_dist/inv_sum
-
-	keep usuario_id match_id count_match
-	append using `all_edges'
-	save `all_edges', replace
 }
 
-use `all_edges', clear
+postclose `donorh'
+postclose `vh'
+
+use "$cd/temp/matches_synth_long.dta", clear
 drop if missing(usuario_id) | missing(match_id) | missing(count_match)
 sort usuario_id match_id
 save "$cd/temp/matches_synth_long.dta", replace
