@@ -81,3 +81,4 @@ foreach nwk in friend friend2 enemy enemy2 {
 
 use "$cd/temp/analysis_base_synth.dta", clear
 merge 1:1 usuario_id using `base_sample', nogen keep(match)
+save "$cd/temp/analysis_base_synth.dta", replace

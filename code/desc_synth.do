@@ -14,6 +14,20 @@ if "$raw_dta"=="" {
 capture mkdir "$cd/temp"
 capture mkdir "$cd/output"
 
+capture program drop export_png_safe
+program define export_png_safe
+	args outpng widthpx
+	capture noisily graph export "`outpng'", width(`widthpx') replace
+	if _rc {
+		local outsvg = subinstr("`outpng'", ".png", ".svg", .)
+		capture noisily graph export "`outsvg'", replace
+		if !_rc {
+			!sips -s format png "`outsvg'" --out "`outpng'" >/dev/null 2>&1
+			capture erase "`outsvg'"
+		}
+	}
+end
+
 local need_prep = 0
 capture confirm file "$cd/temp/analysis_base_synth.dta"
 if _rc local need_prep = 1
@@ -87,11 +101,11 @@ foreach var in indegreef indegreebf indegreee indegreewe degreef degreebf degree
 	local text_y = `axis_max'*0.12
 	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g2, replace
-	graph combine g1.gph g2.gph
-	graph export "$cd/output/scatter_synth/scatter_`var'.png", width(3600) replace
+	capture graph combine g1.gph g2.gph
+	export_png_safe "$cd/output/scatter_synth/scatter_`var'.png" 3600
 }
-erase g1.gph
-erase g2.gph
+capture erase g1.gph
+capture erase g2.gph
 
 * Alternative normalization: denominator is classroom ties by network family.
 foreach var in degree_match wdegree_match indegreef indegreebf indegreee indegreewe degreef degreebf degreee degreewe outdegreef outdegreebf outdegreee outdegreewe {
@@ -152,8 +166,8 @@ foreach var in indegreef indegreee {
 	local text_y = `axis_max'*0.12
 	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g2, replace
-	graph combine g1.gph g2.gph
-	graph export "$cd/output/scatter_synth/scatter_altnorm_`var'.png", width(3600) replace
+	capture graph combine g1.gph g2.gph
+	export_png_safe "$cd/output/scatter_synth/scatter_altnorm_`var'.png" 3600
 }
 
 foreach var in outdegreef outdegreee {
@@ -185,8 +199,8 @@ foreach var in outdegreef outdegreee {
 	local text_y = `axis_max'*0.12
 	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g2, replace
-	graph combine g1.gph g2.gph
-	graph export "$cd/output/scatter_synth/scatter_altnorm_`var'.png", width(3600) replace
+	capture graph combine g1.gph g2.gph
+	export_png_safe "$cd/output/scatter_synth/scatter_altnorm_`var'.png" 3600
 }
 
 foreach var in indegreebf indegreewe {
@@ -218,8 +232,8 @@ foreach var in indegreebf indegreewe {
 	local text_y = `axis_max'*0.12
 	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g2, replace
-	graph combine g1.gph g2.gph
-	graph export "$cd/output/scatter_synth/scatter_altnorm_`var'.png", width(3600) replace
+	capture graph combine g1.gph g2.gph
+	export_png_safe "$cd/output/scatter_synth/scatter_altnorm_`var'.png" 3600
 }
 
 foreach var in outdegreebf outdegreewe {
@@ -251,8 +265,8 @@ foreach var in outdegreebf outdegreewe {
 	local text_y = `axis_max'*0.12
 	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g2, replace
-	graph combine g1.gph g2.gph
-	graph export "$cd/output/scatter_synth/scatter_altnorm_`var'.png", width(3600) replace
+	capture graph combine g1.gph g2.gph
+	export_png_safe "$cd/output/scatter_synth/scatter_altnorm_`var'.png" 3600
 }
 
 foreach var in degreef degreee {
@@ -284,8 +298,8 @@ foreach var in degreef degreee {
 	local text_y = `axis_max'*0.12
 	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g2, replace
-	graph combine g1.gph g2.gph
-	graph export "$cd/output/scatter_synth/scatter_altnorm_`var'.png", width(3600) replace
+	capture graph combine g1.gph g2.gph
+	export_png_safe "$cd/output/scatter_synth/scatter_altnorm_`var'.png" 3600
 }
 
 foreach var in degreebf degreewe {
@@ -317,13 +331,13 @@ foreach var in degreebf degreewe {
 	local text_y = `axis_max'*0.12
 	twoway (function y=x, range(0 `axis_max') lcolor(gs8) lpattern(shortdash)) (scatter `var' wdegree_match, mcolor(black%40)) (lfitci `var' wdegree_match, color(gs10%20)) (lfit `var' wdegree_match, color(black)), legend(off) xtitle("Weighted matching degree") ytitle("``var'' degree") xscale(range(0 `axis_max')) yscale(range(0 `axis_max')) xlabel(0(`axis_step')`axis_max') ylabel(0(`axis_step')`axis_max') text(`text_y' `text_x' "β = `beta'")
 	graph save g2, replace
-	graph combine g1.gph g2.gph
-	graph export "$cd/output/scatter_synth/scatter_altnorm_`var'.png", width(3600) replace
+	capture graph combine g1.gph g2.gph
+	export_png_safe "$cd/output/scatter_synth/scatter_altnorm_`var'.png" 3600
 }
 
 drop *_raw denom_in_fe denom_out_fe denom_deg_fe denom_in_bw denom_out_bw denom_deg_bw
-erase g1.gph
-erase g2.gph
+capture erase g1.gph
+capture erase g2.gph
 restore
 
 // Individual-level degree correlations:
@@ -366,17 +380,17 @@ foreach nwk in friend friend2 enemy enemy2 {
 	else keep if assort_`nwk'_dir1<r(p76)
 	twoway (kdensity assort_`nwk'_dir1, lcolor(navy) lwidth(medthick) lpattern(solid)) (kdensity assort_`nwk'_dir2, lcolor(cranberry) lwidth(medthick) lpattern(dash)) (kdensity assort_`nwk'_union, lcolor(forest_green) lwidth(medthick) lpattern(dot)) (kdensity assort_`nwk'_inter, lcolor(dkorange) lwidth(medthick) lpattern(longdash)), legend(order(1 "Out-``nwk''" 2 "In-``nwk''" 3 "Union" 4 "Intersection") pos(1) ring(0) cols(1) size(small)) xtitle("Assortativity") ytitle("Density")
 	graph save g`nwk', replace
-	graph export "$cd/output/distribution_synth/dens_assort_`nwk'.png", width(3200) replace
+	export_png_safe "$cd/output/distribution_synth/dens_assort_`nwk'.png" 3200
 	twoway (kdensity wassort_`nwk'_dir1, lcolor(navy) lwidth(medthick) lpattern(solid)) (kdensity wassort_`nwk'_dir2, lcolor(cranberry) lwidth(medthick) lpattern(dash)) (kdensity wassort_`nwk'_union, lcolor(forest_green) lwidth(medthick) lpattern(dot)) (kdensity wassort_`nwk'_inter, lcolor(dkorange) lwidth(medthick) lpattern(longdash)), legend(order(1 "Out-``nwk''" 2 "In-``nwk''" 3 "Union" 4 "Intersection") pos(1) ring(0) cols(1) size(small)) xtitle("Weighted assortativity") ytitle("Density")
 	graph save wg`nwk', replace
-	graph export "$cd/output/distribution_synth/dens_wassort_`nwk'.png", width(3200) replace
+	export_png_safe "$cd/output/distribution_synth/dens_wassort_`nwk'.png" 3200
 	restore
 }
-graph combine gfriend.gph gfriend2.gph genemy.gph genemy2.gph
-graph export "$cd/output/distribution_synth/dens_assort.png", width(3400) replace
-graph combine wgfriend.gph wgfriend2.gph wgenemy.gph wgenemy2.gph
-graph export "$cd/output/distribution_synth/dens_wassort.png", width(3400) replace
+capture graph combine gfriend.gph gfriend2.gph genemy.gph genemy2.gph
+export_png_safe "$cd/output/distribution_synth/dens_assort.png" 3400
+capture graph combine wgfriend.gph wgfriend2.gph wgenemy.gph wgenemy2.gph
+export_png_safe "$cd/output/distribution_synth/dens_wassort.png" 3400
 foreach g in gfriend gfriend2 genemy genemy2 {
-	erase `g'.gph
-	erase w`g'.gph
+	capture erase `g'.gph
+	capture erase w`g'.gph
 }
