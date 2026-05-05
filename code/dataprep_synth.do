@@ -33,7 +33,7 @@ replace degree_match=. if degree_match==0
 
 gen freq = count_match
 bysort usuario_id: egen wdegree_match=total(freq^2)
-replace wdegree_match=100*(1/wdegree_match)
+replace wdegree_match=(1/wdegree_match)
 drop freq
 
 save `match_long', replace
@@ -70,11 +70,9 @@ foreach nwk in friend friend2 enemy enemy2 {
 	gen assort_`nwk'_union = (assort_`nwk'_dir1 == 1 | assort_`nwk'_dir2 == 1)
 	gen assort_`nwk'_inter = (assort_`nwk'_dir1 == 1 & assort_`nwk'_dir2 == 1)
 
-	quietly sum count_match, meanonly
-	local max_count = r(max)
 	foreach var in assort_`nwk'_dir1 assort_`nwk'_dir2 assort_`nwk'_union assort_`nwk'_inter {
 		replace `var'=. if match_id==.
-		gen w`var'=`var'*(count_match/`max_count')
+		gen w`var'=`var'*count_match
 	}
 	save "$cd/temp/assort_synth_`nwk'.dta", replace
 }
