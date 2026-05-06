@@ -70,6 +70,7 @@ Matching notes:
 - Scatter plots: `output/scatter/scatter_*.png`
 - Alternative classroom-tie normalization scatters: `output/scatter/scatter_altnorm_*.png`
 - Assortativity densities: `output/distribution/dens_assort*.png`, `output/distribution/dens_wassort*.png`
+  - Current density style (regular and synth): in-degree assortativity with match overlaid against `P(not in relation & not matched)` in the same figure.
 
 ## Notes
 - `temp/` and `output/` are reproducible artifacts and can be regenerated from source code.
