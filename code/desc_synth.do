@@ -382,7 +382,6 @@ duplicates drop
 * Build inverse assortativity probability on full class dyads:
 * P(not in-relation AND not matched), by ego.
 tempfile assort_base inv_probs roster_ego roster_peer dyads match_pairs
-bysort usuario_id: keep if _n==1
 save `assort_base', replace
 
 preserve
@@ -464,7 +463,7 @@ save `inv_probs', replace
 restore
 
 use `assort_base', clear
-merge 1:1 usuario_id using `inv_probs', keep(master match) nogen
+merge m:1 usuario_id using `inv_probs', keep(master match) nogen
 
 local friend "friendship"
 local friend2 "best-friendship"
