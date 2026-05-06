@@ -207,19 +207,35 @@ duplicates drop
 isid usuario_id
 merge 1:1 usuario_id using `old_in_deg_outcomes', nogen
 
-* C) Density graphs: same graph, two curves per network
+* C) Density graphs: same file names as legacy assortativity outputs.
+*    Panel 1: legacy in-degree assortativity (dir1, same trimming rule as before).
+*    Panel 2: new inverse probability (not in-rel & not-match).
 local friend "friendship"
 local friend2 "best-friendship"
 local enemy2 "worst-enmity"
 
 foreach nwk in friend friend2 enemy2 {
 	preserve
+	sum p_match_`nwk', d
+	if r(p75)!=0 keep if p_match_`nwk'<r(p75)
+	else keep if p_match_`nwk'<r(p76)
+
 	twoway ///
-		(kdensity p_match_`nwk', lcolor(navy) lwidth(medthick) lpattern(solid)) ///
+		(kdensity p_match_`nwk', lcolor(navy) lwidth(medthick) lpattern(solid)), ///
+		legend(order(1 "In-``nwk'' & match (legacy)") pos(1) ring(0) cols(1) size(small)) ///
+		xtitle("Assortativity") ytitle("Density")
+	graph save g_old_`nwk', replace
+
+	twoway ///
 		(kdensity p_notrel_notmatch_`nwk', lcolor(cranberry) lwidth(medthick) lpattern(dash)), ///
-		legend(order(1 "In-``nwk'' & match" 2 "Not-in-``nwk'' & not-match") pos(1) ring(0) cols(1) size(small)) ///
+		legend(order(1 "Not-in-``nwk'' & not-match") pos(1) ring(0) cols(1) size(small)) ///
 		xtitle("Probability") ytitle("Density")
-	export_png_safe "$cd/output/distribution_synth/dens_in_`nwk'_vs_notmatch.png" 3400
+	graph save g_new_`nwk', replace
+
+	capture graph combine g_old_`nwk'.gph g_new_`nwk'.gph, cols(2)
+	export_png_safe "$cd/output/distribution_synth/dens_assort_`nwk'.png" 3400
+	capture erase g_old_`nwk'.gph
+	capture erase g_new_`nwk'.gph
 	restore
 }
 
