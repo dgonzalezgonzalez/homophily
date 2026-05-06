@@ -369,8 +369,11 @@ foreach nwk in friend friend2 enemy enemy2 {
 }
 foreach nwk in friend friend2 enemy enemy2 {
 	foreach var in dir1 dir2 union inter {
-		bysort usuario_id: egen assort_`nwk'_`var'_avg=mean(assort_`nwk'_`var')
-		bysort usuario_id: egen wassort_`nwk'_`var'_avg=mean(wassort_`nwk'_`var')
+		bysort usuario_id: egen assort_`nwk'_`var'_avg = mean(assort_`nwk'_`var')
+		bysort usuario_id: egen _w_num = total(assort_`nwk'_`var' * count_match)
+		bysort usuario_id: egen _w_den = total(count_match)
+		gen wassort_`nwk'_`var'_avg = _w_num / _w_den if _w_den>0
+		drop _w_num _w_den
 		drop assort_`nwk'_`var' wassort_`nwk'_`var'
 		rename (assort_`nwk'_`var'_avg wassort_`nwk'_`var'_avg) (assort_`nwk'_`var' wassort_`nwk'_`var')
 	}
