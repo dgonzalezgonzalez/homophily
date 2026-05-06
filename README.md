@@ -56,10 +56,13 @@ Synthetic figures:
 - `output/scatter_synth/scatter_altnorm_*.png`
 - `output/distribution_synth/dens_assort*.png`
 - `output/distribution_synth/dens_wassort*.png`
+- `output/weights_synth/synth_covariate_vweights_table.tex`
+- `output/weights_synth/synth_covariate_vweights_mean.png`
 
 Weighting note:
 - In the synthetic network, donor weights for each individual are normalized to sum to 1.
 - Scatter weighting uses a bootstrap-comparable scaling via `wdegree_match = 1 / sum(w_i^2)` (effective number of donors), so magnitudes are comparable to the legacy weighted-degree interpretation.
+- Covariate-importance summary from synthetic V-matrix weights: `do code/weights_synth.do` (exports LaTeX table + CSV + bar chart to `output/weights_synth/`).
 
 Matching notes:
 - The pipeline caches `temp/matches.dta`.
