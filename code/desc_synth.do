@@ -474,10 +474,10 @@ foreach nwk in friend friend2 enemy enemy2 {
 	sum assort_`nwk'_dir1, d
 	if r(p75)!=0 keep if assort_`nwk'_dir1<r(p75)
 	else keep if assort_`nwk'_dir1<r(p76)
-	twoway (kdensity assort_`nwk'_dir1, lcolor(navy) lwidth(medthick) lpattern(solid)) (kdensity p_notrel_notmatch_`nwk', lcolor(cranberry) lwidth(medthick) lpattern(dash)), legend(order(1 "In-``nwk'' & match" 2 "Not-in-``nwk'' & not-match") pos(1) ring(0) cols(1) size(small)) xtitle("Probability") ytitle("Density")
+	twoway (kdensity assort_`nwk'_dir1, lcolor(navy) lwidth(medthick) lpattern(solid)) (kdensity p_notrel_notmatch_`nwk', lcolor(cranberry) lwidth(medthick) lpattern(dash)), legend(order(1 "In-``nwk'' & match" 2 "Not-in-``nwk'' & not-match") pos(1) ring(0) cols(1) size(small)) xtitle("Assortativity") ytitle("Density")
 	graph save g`nwk', replace
 	export_png_safe "$cd/output/distribution_synth/dens_assort_`nwk'.png" 3200
-	twoway (kdensity wassort_`nwk'_dir1, lcolor(navy) lwidth(medthick) lpattern(solid)) (kdensity p_notrel_notmatch_`nwk', lcolor(cranberry) lwidth(medthick) lpattern(dash)), legend(order(1 "Weighted in-``nwk'' & match" 2 "Not-in-``nwk'' & not-match") pos(1) ring(0) cols(1) size(small)) xtitle("Probability") ytitle("Density")
+	twoway (kdensity wassort_`nwk'_dir1, lcolor(navy) lwidth(medthick) lpattern(solid)) (kdensity p_notrel_notmatch_`nwk', lcolor(cranberry) lwidth(medthick) lpattern(dash)), legend(order(1 "Weighted in-``nwk'' & match" 2 "Not-in-``nwk'' & not-match") pos(1) ring(0) cols(1) size(small)) xtitle("Assortativity") ytitle("Density")
 	graph save wg`nwk', replace
 	export_png_safe "$cd/output/distribution_synth/dens_wassort_`nwk'.png" 3200
 	restore
