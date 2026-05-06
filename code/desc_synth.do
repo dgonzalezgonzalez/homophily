@@ -379,6 +379,93 @@ foreach nwk in friend friend2 enemy enemy2 {
 drop match_id count_match
 duplicates drop
 
+* Build inverse assortativity probability on full class dyads:
+* P(not in-relation AND not matched), by ego.
+tempfile assort_base inv_probs roster_ego roster_peer dyads match_pairs
+bysort usuario_id: keep if _n==1
+save `assort_base', replace
+
+preserve
+keep usuario_id class_id
+duplicates drop
+rename usuario_id ego_id
+save `roster_ego', replace
+
+use `roster_ego', clear
+rename ego_id peer_id
+save `roster_peer', replace
+
+use `roster_ego', clear
+joinby class_id using `roster_peer'
+drop if ego_id==peer_id
+rename ego_id usuario_id
+save `dyads', replace
+
+use "$cd/temp/matches_synth_long.dta", clear
+keep usuario_id match_id count_match
+drop if missing(usuario_id) | missing(match_id) | missing(count_match) | count_match<=0
+rename match_id peer_id
+keep usuario_id peer_id
+duplicates drop
+gen is_match = 1
+save `match_pairs', replace
+
+use `dyads', clear
+merge m:1 usuario_id peer_id using `match_pairs', keep(master match) nogen
+replace is_match = 0 if missing(is_match)
+
+foreach nwk in friend friend2 enemy enemy2 {
+	tempfile rel_`nwk'
+	if "`nwk'"=="friend" {
+		use "$cd/temp/friend.dta", clear
+		keep usuario_id friend_id
+		rename usuario_id peer_id
+		rename friend_id usuario_id
+	}
+	else if "`nwk'"=="friend2" {
+		use "$cd/temp/friend2.dta", clear
+		keep usuario_id friend2_id
+		rename usuario_id peer_id
+		rename friend2_id usuario_id
+	}
+	else if "`nwk'"=="enemy" {
+		use "$cd/temp/enemy.dta", clear
+		keep usuario_id enemy_id
+		rename usuario_id peer_id
+		rename enemy_id usuario_id
+	}
+	else {
+		use "$cd/temp/enemy2.dta", clear
+		keep usuario_id enemy2_id
+		rename usuario_id peer_id
+		rename enemy2_id usuario_id
+	}
+	drop if missing(usuario_id) | missing(peer_id)
+	keep usuario_id peer_id
+	duplicates drop
+	gen in_rel_`nwk' = 1
+	save `rel_`nwk'', replace
+}
+
+use `dyads', clear
+merge m:1 usuario_id peer_id using `match_pairs', keep(master match) nogen
+replace is_match = 0 if missing(is_match)
+
+foreach nwk in friend friend2 enemy enemy2 {
+	merge m:1 usuario_id peer_id using `rel_`nwk'', keep(master match) nogen
+	replace in_rel_`nwk' = 0 if missing(in_rel_`nwk')
+	gen notrel_notmatch_`nwk' = (in_rel_`nwk'==0 & is_match==0)
+	bysort usuario_id: egen p_notrel_notmatch_`nwk' = mean(notrel_notmatch_`nwk')
+}
+
+keep usuario_id p_notrel_notmatch_friend p_notrel_notmatch_friend2 p_notrel_notmatch_enemy p_notrel_notmatch_enemy2
+duplicates drop
+save `inv_probs', replace
+restore
+
+use `assort_base', clear
+merge 1:1 usuario_id using `inv_probs', keep(master match) nogen
+
 local friend "friendship"
 local friend2 "best-friendship"
 local enemy "enemity"
@@ -388,10 +475,10 @@ foreach nwk in friend friend2 enemy enemy2 {
 	sum assort_`nwk'_dir1, d
 	if r(p75)!=0 keep if assort_`nwk'_dir1<r(p75)
 	else keep if assort_`nwk'_dir1<r(p76)
-	twoway (kdensity assort_`nwk'_dir1, lcolor(navy) lwidth(medthick) lpattern(solid)) (kdensity assort_`nwk'_dir2, lcolor(cranberry) lwidth(medthick) lpattern(dash)) (kdensity assort_`nwk'_union, lcolor(forest_green) lwidth(medthick) lpattern(dot)) (kdensity assort_`nwk'_inter, lcolor(dkorange) lwidth(medthick) lpattern(longdash)), legend(order(1 "Out-``nwk''" 2 "In-``nwk''" 3 "Union" 4 "Intersection") pos(1) ring(0) cols(1) size(small)) xtitle("Assortativity") ytitle("Density")
+	twoway (kdensity assort_`nwk'_dir1, lcolor(navy) lwidth(medthick) lpattern(solid)) (kdensity p_notrel_notmatch_`nwk', lcolor(cranberry) lwidth(medthick) lpattern(dash)), legend(order(1 "In-``nwk'' & match" 2 "Not-in-``nwk'' & not-match") pos(1) ring(0) cols(1) size(small)) xtitle("Probability") ytitle("Density")
 	graph save g`nwk', replace
 	export_png_safe "$cd/output/distribution_synth/dens_assort_`nwk'.png" 3200
-	twoway (kdensity wassort_`nwk'_dir1, lcolor(navy) lwidth(medthick) lpattern(solid)) (kdensity wassort_`nwk'_dir2, lcolor(cranberry) lwidth(medthick) lpattern(dash)) (kdensity wassort_`nwk'_union, lcolor(forest_green) lwidth(medthick) lpattern(dot)) (kdensity wassort_`nwk'_inter, lcolor(dkorange) lwidth(medthick) lpattern(longdash)), legend(order(1 "Out-``nwk''" 2 "In-``nwk''" 3 "Union" 4 "Intersection") pos(1) ring(0) cols(1) size(small)) xtitle("Weighted assortativity") ytitle("Density")
+	twoway (kdensity wassort_`nwk'_dir1, lcolor(navy) lwidth(medthick) lpattern(solid)) (kdensity p_notrel_notmatch_`nwk', lcolor(cranberry) lwidth(medthick) lpattern(dash)), legend(order(1 "Weighted in-``nwk'' & match" 2 "Not-in-``nwk'' & not-match") pos(1) ring(0) cols(1) size(small)) xtitle("Probability") ytitle("Density")
 	graph save wg`nwk', replace
 	export_png_safe "$cd/output/distribution_synth/dens_wassort_`nwk'.png" 3200
 	restore
