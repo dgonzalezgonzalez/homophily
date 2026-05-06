@@ -64,7 +64,7 @@ foreach xvar in degree_match wdegree_match {
 	quietly sum `xvar', meanonly
 	local max_`xvar'=r(max)
 }
-foreach var in indegreef indegreebf indegreee indegreewe degreef degreebf degreee degreewe outdegreef outdegreebf outdegreee outdegreewe {
+foreach var in indegreef indegreebf indegreee indegreewe {
 	quietly sum `var', meanonly
 	local max_`var'=r(max)
 	reg `var' degree_match

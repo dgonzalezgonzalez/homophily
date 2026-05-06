@@ -35,8 +35,8 @@ bysort usuario_id (match_id): gen degree_match = sum(match_id != match_id[_n-1])
 bysort usuario_id: replace degree_match = degree_match[_N]
 replace degree_match=. if degree_match==0
 
-bysort usuario_id: egen wdegree_match=total(synth_weight^2)
-replace wdegree_match=(1/wdegree_match)
+* Weighted tie mass per ego (recommended for size-oriented normalization).
+bysort usuario_id: egen wdegree_match = total(synth_weight)
 
 save `match_long', replace
 

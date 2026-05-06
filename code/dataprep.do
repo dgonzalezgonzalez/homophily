@@ -42,8 +42,7 @@ replace count_match=. if degree_match==.
 
 quietly sum match_n, meanonly
 gen freq=count_match/r(max)
-bysort usuario_id: egen wdegree_match=total(freq^2)
-replace wdegree_match=100*(1/wdegree_match)
+bysort usuario_id: egen wdegree_match = total(freq)
 drop freq
 save `match_long', replace
 
