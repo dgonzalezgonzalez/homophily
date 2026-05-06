@@ -48,7 +48,7 @@ if `need_prep' {
 use "$cd/temp/analysis_base_synth.dta", clear
 
 * Balanced sample for selected in-degree outcomes only.
-local analysis_vars class_id class_size school grade group2 degree_match wdegree_match indegreef indegreebf indegreewe
+local analysis_vars class_id class_size school grade group2 degree_match wdegree_match indegreef indegreebf indegreee indegreewe
 egen nmiss_analysis = rowmiss(`analysis_vars')
 drop if nmiss_analysis>0
 drop nmiss_analysis
@@ -63,10 +63,10 @@ capture mkdir "$cd/output/distribution_synth"
 // Class-level scatter: in-degree outcomes only (friend, best friend, worst enemy)
 //////////////////////////////////////////////////////////////////////////////
 preserve
-collapse (sum) degree_match wdegree_match indegreef indegreebf indegreewe (mean) class_size, by(class_id)
+collapse (sum) degree_match wdegree_match indegreef indegreebf indegreee indegreewe (mean) class_size, by(class_id)
 drop if degree_match==0
 
-foreach var in degree_match wdegree_match indegreef indegreebf indegreewe {
+foreach var in degree_match wdegree_match indegreef indegreebf indegreee indegreewe {
 	replace `var'=`var'/((class_size-1)*class_size)
 }
 
@@ -75,8 +75,8 @@ foreach xvar in degree_match wdegree_match {
 	local max_`xvar'=r(max)
 }
 
-foreach var in indegreef indegreebf indegreewe {
-	local ylab = cond("`var'"=="indegreef","In-degree friendship", cond("`var'"=="indegreebf","In-degree best-friendship","In-degree worst-enmity"))
+foreach var in indegreef indegreebf indegreee indegreewe {
+	local ylab = cond("`var'"=="indegreef","In-degree friendship", cond("`var'"=="indegreebf","In-degree best-friendship", cond("`var'"=="indegreee","In-degree enmity","In-degree worst-enmity")))
 	quietly sum `var', meanonly
 	local max_`var'=r(max)
 
