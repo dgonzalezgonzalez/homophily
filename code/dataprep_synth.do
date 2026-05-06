@@ -27,14 +27,15 @@ foreach nwk in friend friend2 enemy enemy2 {
 use "$cd/temp/matches_synth_long.dta", clear
 sort usuario_id match_id
 
+* Synthetic-control donor weights are stored in count_match.
+gen synth_weight = count_match
+
 bysort usuario_id (match_id): gen degree_match = sum(match_id != match_id[_n-1])
 bysort usuario_id: replace degree_match = degree_match[_N]
 replace degree_match=. if degree_match==0
 
-gen freq = count_match
-bysort usuario_id: egen wdegree_match=total(freq^2)
+bysort usuario_id: egen wdegree_match=total(synth_weight^2)
 replace wdegree_match=(1/wdegree_match)
-drop freq
 
 save `match_long', replace
 
@@ -60,7 +61,7 @@ foreach nwk in friend friend2 enemy enemy2 {
 	save `dir2', replace
 
 	use `match_long', clear
-	keep usuario_id match_id count_match
+	keep usuario_id match_id count_match synth_weight
 	duplicates drop
 	merge m:1 usuario_id match_id using `dir1', keep(master match) nogen
 	replace assort_`nwk'_dir1 = 0 if missing(assort_`nwk'_dir1)
@@ -72,7 +73,7 @@ foreach nwk in friend friend2 enemy enemy2 {
 
 	foreach var in assort_`nwk'_dir1 assort_`nwk'_dir2 assort_`nwk'_union assort_`nwk'_inter {
 		replace `var'=. if match_id==.
-		gen w`var'=`var'*count_match
+		gen w`var'=`var'*synth_weight
 	}
 	save "$cd/temp/assort_synth_`nwk'.dta", replace
 }

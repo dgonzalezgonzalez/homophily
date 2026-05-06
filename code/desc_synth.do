@@ -47,6 +47,16 @@ if `need_prep' {
 
 use "$cd/temp/analysis_base_synth.dta", clear
 
+* Keep a balanced analysis sample: non-missing in all variables used below.
+local analysis_vars class_id class_size school grade group2 ///
+	degree_match wdegree_match ///
+	indegreef indegreebf indegreee indegreewe ///
+	outdegreef outdegreebf outdegreee outdegreewe ///
+	degreef degreebf degreee degreewe
+egen nmiss_analysis = rowmiss(`analysis_vars')
+drop if nmiss_analysis>0
+drop nmiss_analysis
+
 capture mkdir "$cd/output/scatter_synth"
 capture mkdir "$cd/output/distribution_synth"
 
