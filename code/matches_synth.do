@@ -84,7 +84,7 @@ postclose `donorh'
 postclose `vh'
 
 use "$cd/temp/matches_synth_long.dta", clear
-drop if missing(usuario_id) | missing(match_id) | missing(count_match)
+drop if missing(usuario_id) | missing(match_id) | missing(count_match) | count_match<=0
 sort usuario_id match_id
 save "$cd/temp/matches_synth_long.dta", replace
 

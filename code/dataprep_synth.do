@@ -29,6 +29,7 @@ sort usuario_id match_id
 
 * Synthetic-control donor weights are stored in count_match.
 gen synth_weight = count_match
+drop if missing(synth_weight) | synth_weight<=0
 
 bysort usuario_id (match_id): gen degree_match = sum(match_id != match_id[_n-1])
 bysort usuario_id: replace degree_match = degree_match[_N]
@@ -39,6 +40,7 @@ replace wdegree_match=(1/wdegree_match)
 
 save `match_long', replace
 
+drop synth_weight
 bysort usuario_id (count_match): gen match_n = _N - _n + 1
 reshape wide match_id count_match, i(usuario_id) j(match_n)
 save "$cd/temp/analysis_base_synth.dta", replace
