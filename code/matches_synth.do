@@ -50,8 +50,8 @@ foreach c in `class_list' {
 		xtset usuario_id te
 
 		capture erase `keep_w'
-		capture quietly synth scoreN gender scoreN migrant bullying_union moodgeneral patienceN crtN finN riskyN inequalityN honest, ///
-			trunit(`tu') trperiod(2) keep(`keep_w') replace
+		capture quietly synth scoreN gender migrant bullying_union moodgeneral patienceN crtN finN riskyN inequalityN honest, ///
+			trunit(`tu') trperiod(2) keep(`keep_w') replace maxiter(200)
 		if _rc!=0 continue
 
 		* Store donor weights for treated unit.
